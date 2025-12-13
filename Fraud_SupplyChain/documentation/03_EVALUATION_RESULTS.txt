@@ -380,8 +380,3 @@ detection systems where maximizing fraud detection rate is the primary
 objective, and the cost of investigation is acceptable relative to the
 cost of undetected fraud.
 
-======================================================================
-END OF REPORT
-Generated: November 4, 2025
-Model Version: Combined Model (Transaction + Network Features)
-======================================================================

@@ -40,61 +40,8 @@ To make predictions using the ensemble:
    - If average_probability > 0.20: Predict FRAUD
    - Otherwise: Predict NOT FRAUD
 
-PERFORMANCE METRICS
--------------------
-Ensemble Performance (Test Set):
-- Accuracy:  77.73%
-- Precision: 20.15%
-- Recall:    74.83% (TARGET ACHIEVED)
-- F1-Score:  31.75%
-- ROC-AUC:   82.16%
 
-Confusion Matrix:
-- True Positives (Frauds Caught): 214 / 286 (74.83%)
-- False Negatives (Frauds Missed): 72 (25.17%)
-- False Positives (False Alerts): 848 / 3845 (22.05%)
-- True Negatives (Correct): 2997 (77.95%)
 
-HOW TO USE FOR API/PRODUCTION
-------------------------------
-
-Example Python code for loading and using the ensemble:
-
-```python
-import numpy as np
-from tensorflow import keras
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-
-# Load the 3 models
-model1 = keras.models.load_model('best_models/combined_model_seed42.keras')
-model2 = keras.models.load_model('best_models/combined_model_seed123.keras')
-model3 = keras.models.load_model('best_models/combined_model_seed456.keras')
-
-# Preprocess new data
-# Assuming X_new has 61 features (57 transaction + 4 network)
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X_new)
-
-pca = PCA(n_components=45)
-X_pca = pca.fit_transform(X_scaled)
-
-# Get predictions from all 3 models
-pred1 = model1.predict(X_pca).flatten()
-pred2 = model2.predict(X_pca).flatten()
-pred3 = model3.predict(X_pca).flatten()
-
-# Ensemble prediction (average)
-ensemble_pred = (pred1 + pred2 + pred3) / 3
-
-# Apply threshold
-THRESHOLD = 0.20
-final_prediction = (ensemble_pred > THRESHOLD).astype(int)
-
-# Result:
-# 0 = Not Fraud
-# 1 = Fraud
-```
 
 IMPORTANT NOTES FOR API DEPLOYMENT
 -----------------------------------
@@ -147,16 +94,6 @@ Output:
   "alert_priority": 1-5
 }
 
-MAINTENANCE
------------
-- Model Version: 1.0 (November 2025)
-- Last Training Date: November 2025
-- Recommended Retraining: Every 3-6 months with new data
-- Monitor Recall metric in production (should stay >70%)
 
-For questions or issues, refer to:
-- CONSOLIDATED_EVALUATION_RESULTS.txt (performance details)
-- main_ensemble.py (training code)
-- config.py (configuration settings)
 
 ======================================================================
