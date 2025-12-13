@@ -1,7 +1,7 @@
-# Dataset files
-data/
-*.csv
-*.zip
+# Dataset files (allowing for deployment)
+# data/
+# *.csv
+# *.zip
 
 # Kaggle credentials
 .kaggle/
