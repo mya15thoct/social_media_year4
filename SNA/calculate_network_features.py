@@ -2,6 +2,10 @@
 TÍNH NETWORK FEATURES
 Extract các centrality measures và community detection
 """
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 import pickle
 import networkx as nx
 import pandas as pd
@@ -82,8 +86,79 @@ def calculate_network_features():
     print(f"  - Max: {max(closeness_dict.values()):.6f}")
     print(f"  - Mean: {sum(closeness_dict.values())/len(closeness_dict):.6f}")
     
-    # 4. COMMUNITY DETECTION
-    print("\n[5] Detect Communities...")
+    # 4. PAGERANK
+    print("\n[5] Tính PageRank...")
+    print("  (Random walk với teleportation - Lecture 4)")
+    print("  ⏳ Calculating PageRank...")
+    
+    pagerank_dict_full = nx.pagerank(G, alpha=0.85, max_iter=100)
+    
+    # Chỉ lấy customers
+    pagerank_dict = {node: pagerank_dict_full[node] for node in customer_nodes}
+    
+    print(f"  ✓ Đã tính PageRank cho {len(pagerank_dict):,} customers")
+    print(f"  - Min: {min(pagerank_dict.values()):.8f}")
+    print(f"  - Max: {max(pagerank_dict.values()):.8f}")
+    print(f"  - Mean: {sum(pagerank_dict.values())/len(pagerank_dict):.8f}")
+    
+    # 5. EIGENVECTOR CENTRALITY
+    print("\n[6] Tính Eigenvector Centrality...")
+    print("  (Node important nếu connected to important nodes - Lecture 4)")
+    print("  ⏳ Calculating Eigenvector Centrality...")
+    
+    try:
+        eigenvector_dict_full = nx.eigenvector_centrality(G, max_iter=200, tol=1e-06)
+        eigenvector_dict = {node: eigenvector_dict_full[node] for node in customer_nodes}
+        
+        print(f"  ✓ Đã tính Eigenvector Centrality cho {len(eigenvector_dict):,} customers")
+        print(f"  - Min: {min(eigenvector_dict.values()):.8f}")
+        print(f"  - Max: {max(eigenvector_dict.values()):.8f}")
+        print(f"  - Mean: {sum(eigenvector_dict.values())/len(eigenvector_dict):.8f}")
+    except:
+        print("  ⚠️ Eigenvector centrality không converge, dùng giá trị 0")
+        eigenvector_dict = {node: 0.0 for node in customer_nodes}
+    
+    # 6. CLUSTERING COEFFICIENT
+    print("\n[7] Tính Clustering Coefficient...")
+    print("  (Transitivity - Lecture 3)")
+    print("  ⏳ Projecting bipartite graph to customer-customer network...")
+    
+    # Project bipartite graph sang customer-customer network
+    # 2 customers connected nếu mua cùng product
+    from collections import defaultdict
+    
+    # Build customer-customer edges
+    product_to_customers = defaultdict(set)
+    for node in G.nodes():
+        if node.startswith('P_'):
+            # Get all customers connected to this product
+            customers = [n for n in G.neighbors(node) if n.startswith('C_')]
+            product_to_customers[node] = set(customers)
+    
+    # Create customer-customer graph
+    G_customer = nx.Graph()
+    G_customer.add_nodes_from(customer_nodes)
+    
+    # Add edges between customers who share products
+    for product, customers in product_to_customers.items():
+        customers_list = list(customers)
+        for i in range(len(customers_list)):
+            for j in range(i+1, len(customers_list)):
+                G_customer.add_edge(customers_list[i], customers_list[j])
+    
+    print(f"  ✓ Projected graph: {G_customer.number_of_nodes():,} nodes, {G_customer.number_of_edges():,} edges")
+    print("  ⏳ Calculating clustering coefficients...")
+    
+    clustering_dict_full = nx.clustering(G_customer)
+    clustering_dict = {node: clustering_dict_full[node] for node in customer_nodes}
+    
+    print(f"  ✓ Đã tính Clustering Coefficient cho {len(clustering_dict):,} customers")
+    print(f"  - Min: {min(clustering_dict.values()):.6f}")
+    print(f"  - Max: {max(clustering_dict.values()):.6f}")
+    print(f"  - Mean: {sum(clustering_dict.values())/len(clustering_dict):.6f}")
+    
+    # 7. COMMUNITY DETECTION
+    print("\n[8] Detect Communities...")
     print("  (Phát hiện nhóm nodes có kết nối chặt chẽ)")
     
     try:
@@ -122,7 +197,7 @@ def calculate_network_features():
         print(f"  ✓ Đã tạo {num_communities} communities từ connected components")
     
     # Tổng hợp kết quả
-    print("\n[6] Tạo DataFrame tổng hợp...")
+    print("\n[9] Tạo DataFrame tổng hợp...")
     
     # Tạo DataFrame
     results = []
@@ -134,10 +209,14 @@ def calculate_network_features():
             'degree_centrality': degree_dict.get(node, 0),
             'betweenness_centrality': betweenness_dict.get(node, 0),
             'closeness_centrality': closeness_dict.get(node, 0),
+            'pagerank': pagerank_dict.get(node, 0),
+            'eigenvector_centrality': eigenvector_dict.get(node, 0),
+            'clustering_coefficient': clustering_dict.get(node, 0),
             'community_id': community_dict.get(node, 0),
             'degree': G.degree(node),  # Actual degree (number of products)
             'is_fraud': G.nodes[node].get('is_fraud', 0)
         })
+
     
     df_features = pd.DataFrame(results)
     
@@ -148,7 +227,7 @@ def calculate_network_features():
     print(df_features.describe())
     
     # So sánh fraud vs normal
-    print("\n[8] So sánh Fraud vs Normal customers:")
+    print("\n[11] So sánh Fraud vs Normal customers:")
     
     fraud_df = df_features[df_features['is_fraud'] == 1]
     normal_df = df_features[df_features['is_fraud'] == 0]
@@ -158,22 +237,33 @@ def calculate_network_features():
     print(f"    - Avg degree centrality: {fraud_df['degree_centrality'].mean():.6f}")
     print(f"    - Avg betweenness: {fraud_df['betweenness_centrality'].mean():.6f}")
     print(f"    - Avg closeness: {fraud_df['closeness_centrality'].mean():.6f}")
+    print(f"    - Avg PageRank: {fraud_df['pagerank'].mean():.8f}")
+    print(f"    - Avg eigenvector: {fraud_df['eigenvector_centrality'].mean():.8f}")
+    print(f"    - Avg clustering: {fraud_df['clustering_coefficient'].mean():.6f}")
     
     print(f"\n  Normal customers ({len(normal_df):,}):")
     print(f"    - Avg degree: {normal_df['degree'].mean():.2f}")
     print(f"    - Avg degree centrality: {normal_df['degree_centrality'].mean():.6f}")
     print(f"    - Avg betweenness: {normal_df['betweenness_centrality'].mean():.6f}")
     print(f"    - Avg closeness: {normal_df['closeness_centrality'].mean():.6f}")
+    print(f"    - Avg PageRank: {normal_df['pagerank'].mean():.8f}")
+    print(f"    - Avg eigenvector: {normal_df['eigenvector_centrality'].mean():.8f}")
+    print(f"    - Avg clustering: {normal_df['clustering_coefficient'].mean():.6f}")
+
     
     # Lưu dictionaries
-    print("\n[9] Lưu dictionaries...")
+    print("\n[12] Lưu dictionaries...")
     
     features_dict = {
         'degree_centrality': degree_dict,
         'betweenness_centrality': betweenness_dict,
         'closeness_centrality': closeness_dict,
+        'pagerank': pagerank_dict,
+        'eigenvector_centrality': eigenvector_dict,
+        'clustering_coefficient': clustering_dict,
         'community_id': community_dict
     }
+
     
     with open('data/network_features_dict.pkl', 'wb') as f:
         pickle.dump(features_dict, f)
@@ -187,19 +277,23 @@ def calculate_network_features():
     print("\n" + "="*80)
     print("TÓM TẮT NETWORK FEATURES")
     print("="*80)
-    print(f"✓ Đã tính 4 loại features:")
+    print(f"✓ Đã tính 7 loại features:")
     print(f"  1. Degree Centrality - Số lượng connections")
     print(f"  2. Betweenness Centrality - Vai trò cầu nối")
     print(f"  3. Closeness Centrality - Khoảng cách đến nodes khác")
-    print(f"  4. Community ID - Nhóm cộng đồng")
+    print(f"  4. PageRank - Random walk với teleportation")
+    print(f"  5. Eigenvector Centrality - Recursive importance")
+    print(f"  6. Clustering Coefficient - Transitivity (fraud rings)")
+    print(f"  7. Community ID - Nhóm cộng đồng")
     print(f"\n✓ Kết quả:")
     print(f"  - {len(df_features):,} customers có features")
     print(f"  - {num_communities} communities được phát hiện")
     print(f"  - Files đã tạo:")
-    print(f"    • network_features_dict.pkl (4 dictionaries)")
+    print(f"    • network_features_dict.pkl (7 dictionaries)")
     print(f"    • network_features.csv (DataFrame)")
     print(f"\n✓ Sẵn sàng để so sánh với traditional features!")
     print("="*80)
+
     
     return df_features, features_dict
 

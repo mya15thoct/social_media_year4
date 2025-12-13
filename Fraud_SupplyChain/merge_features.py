@@ -30,7 +30,9 @@ def merge_features(df_transaction, df_network):
     
     # Select only network features (exclude is_fraud from network_features)
     network_cols = ['Customer Id', 'degree_centrality', 'betweenness_centrality', 
-                    'closeness_centrality', 'community_id']
+                    'closeness_centrality', 'pagerank', 'eigenvector_centrality',
+                    'clustering_coefficient', 'community_id']
+
     
     # Check which columns exist
     existing_network_cols = [col for col in network_cols if col in df_network.columns]
@@ -62,7 +64,9 @@ def save_separate_datasets(df_merged):
     all_features = [col for col in df_merged.columns if col not in exclude_cols]
     
     network_features = ['degree_centrality', 'betweenness_centrality', 
-                       'closeness_centrality', 'community_id']
+                       'closeness_centrality', 'pagerank', 'eigenvector_centrality',
+                       'clustering_coefficient', 'community_id']
+
     
     # Filter network features that exist
     network_features = [col for col in network_features if col in df_merged.columns]
@@ -110,12 +114,41 @@ def main():
         print("Please ensure network_features.csv exists in data/ folder")
         return
     
+    # Check for link prediction features
+    lp_path = os.path.join(current_dir, '..', 'data', 'link_prediction_features.csv')
+    has_lp_features = os.path.exists(lp_path)
+    
+    if has_lp_features:
+        print(f"✓ Found link prediction features at {lp_path}")
+    else:
+        print(f"⚠️ Link prediction features not found (optional)")
+
+    
     # Step 1: Load features
     df_transaction = load_transaction_features(transaction_path)
     df_network = load_network_features(network_path)
     
-    # Step 2: Merge
+    # Step 2: Merge transaction + network
     df_merged = merge_features(df_transaction, df_network)
+    
+    # Step 2.5: Merge link prediction features if available
+    if has_lp_features:
+        print("\nMerging link prediction features...")
+        df_lp = pd.read_csv(lp_path)
+        
+        # Rename customer_id to Customer Id
+        if 'customer_id' in df_lp.columns:
+            df_lp.rename(columns={'customer_id': 'Customer Id'}, inplace=True)
+        
+        # Select only LP features (exclude is_fraud)
+        lp_cols = ['Customer Id', 'avg_jaccard_unmade', 'max_adamic_adar_unmade',
+                   'num_high_sim_unmade', 'num_low_sim_made', 'anomaly_score']
+        existing_lp_cols = [col for col in lp_cols if col in df_lp.columns]
+        df_lp_selected = df_lp[existing_lp_cols].copy()
+        
+        # Merge
+        df_merged = pd.merge(df_merged, df_lp_selected, on='Customer Id', how='left')
+        print(f"  ✓ Added {len(existing_lp_cols)-1} link prediction features")
     
     # Step 3: Save 3 versions
     feature_dict = save_separate_datasets(df_merged)
