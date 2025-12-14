@@ -1,0 +1,22 @@
+================================================================================
+ABLATION STUDY - DNN MODEL
+================================================================================
+
+             Feature_Set  N_Features ROC_AUC Recall Precision F1_Score
+      1_Transaction_Only          57  0.8191 0.6923    0.1898   0.2980
+2_Transaction_OldNetwork          61  0.8150 0.7028    0.2020   0.3138
+3_Transaction_NewNetwork          65  0.8201 0.7098    0.1864   0.2953
+          4_Network_Only           8  0.6895 1.0000    0.0692   0.1295
+
+================================================================================
+FEATURE IMPACT ANALYSIS
+================================================================================
+
+Baseline (61 features):  AUC=0.8150, Recall=0.7028
+Enhanced (65 features):  AUC=0.8201, Recall=0.7098
+
+Improvement:
+  Δ AUC:    +0.51%
+  Δ Recall:  +0.70%
+  Δ TP:      +2 frauds caught
+  Δ FN:      -2 frauds missed
