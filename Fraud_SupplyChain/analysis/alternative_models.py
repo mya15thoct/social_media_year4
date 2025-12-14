@@ -96,7 +96,7 @@ models['Random_Forest'] = {
         min_samples_split=20,
         class_weight='balanced',
         random_state=42,
-        n_jobs=-1
+        n_jobs=1  # Avoid OpenMP conflict
     ),
     'description': 'Random Forest (100 trees, max_depth=10)'
 }
@@ -110,7 +110,7 @@ if HAS_XGBOOST:
             learning_rate=0.1,
             scale_pos_weight=len(y_train[y_train==0]) / len(y_train[y_train==1]),
             random_state=42,
-            n_jobs=-1,
+            n_jobs=1,  # Avoid OpenMP conflict
             verbosity=0
         ),
         'description': 'XGBoost (100 trees, lr=0.1)'
@@ -125,7 +125,7 @@ if HAS_LIGHTGBM:
             learning_rate=0.1,
             is_unbalance=True,
             random_state=42,
-            n_jobs=-1,
+            n_jobs=1,  # Avoid OpenMP conflict
             verbose=-1
         ),
         'description': 'LightGBM (100 trees, lr=0.1)'
@@ -150,7 +150,7 @@ models['Logistic_Regression'] = {
         class_weight='balanced',
         solver='lbfgs',
         random_state=42,
-        n_jobs=-1
+        n_jobs=1  # Avoid OpenMP conflict
     ),
     'description': 'Logistic Regression (L2 regularization)'
 }
