@@ -160,13 +160,14 @@ for name, feature_config in feature_sets.items():
             fn_cost=config.FN_COST
         )
         
-        # Train (silently)
+        # Train with progress
+        print(f"    Training {config.EPOCHS} epochs...")
         fraud_model.fit(
             X_train_final, y_train_final,
             validation_data=(X_val, y_val),
             epochs=config.EPOCHS,
             batch_size=config.BATCH_SIZE,
-            verbose=0,
+            verbose=1,  # Show epoch progress
             callbacks=[
                 __import__('tensorflow').keras.callbacks.EarlyStopping(
                     monitor='val_loss',

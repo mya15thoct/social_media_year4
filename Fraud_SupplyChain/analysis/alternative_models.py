@@ -14,9 +14,13 @@ Models Tested:
 All models tested on combined_features.csv (65 features)
 """
 
+# Fix OpenMP/MKL conflict error
+import os
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+
 import pandas as pd
 import numpy as np
-import os
 import sys
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
