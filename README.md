@@ -1,116 +1,90 @@
 # Fraud Detection in Supply Chain
 
-Dự án phát hiện giao dịch gian lận trong chuỗi cung ứng sử dụng Deep Learning kết hợp với Social Network Analysis.
+Deep Learning + Social Network Analysis for fraud detection in supply chain transactions.
 
-## Tóm tắt
+## Quick Start
 
-Mô hình DNN ensemble kết hợp features từ giao dịch (57 features) và network topology (8 features) để detect fraud trong supply chain dataset. Model đạt **82.54% ROC-AUC** và **75.17% Recall**.
-
-**Dataset**: DataCo Supply Chain (180K orders, 20K customers, fraud rate: 6.9%)
-
-## Cấu trúc thư mục
-
-```
-data/
-├── raw/          # Dataset gốc (96 MB)
-├── processed/    # Features đã xử lý (35 MB)
-└── intermediate/ # Graph files, temp files (48 MB)
-
-Fraud_SupplyChain/
-├── analysis/     # Ablation study, model comparison
-├── model/        # DNN model, training code
-├── clean_data.py
-├── extract_transaction_features.py
-└── merge_features.py
-
-SNA/              # Network analysis scripts
-```
-
-## Setup
+### 1. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Cách chạy
-
-### 1. Extract features từ dataset gốc
+### 2. Run Complete Pipeline
 
 ```bash
-cd Fraud_SupplyChain
+# Step 1: Extract transaction features
+cd Fraud_SupplyChain/preprocessing
 python extract_transaction_features.py
-```
 
-Output: `data/processed/transaction_features.csv`
+# Step 2: Build network and calculate features
+cd ../network
+python create_edgelist.py
+python build_network.py
+python calculate_network_features.py
 
-### 2. Merge transaction + network features
-
-```bash
+# Step 3: Merge all features
+cd ../preprocessing
 python merge_features.py
-```
 
-Output: 
-- `data/processed/combined_features.csv`
-- `data/processed/transaction_only.csv`
-- `data/processed/network_only.csv`
-
-### 3. Train model
-
-```bash
-cd model
+# Step 4: Train model
+cd ../model
 python main_ensemble.py
+
+# Step 5: Run analysis
+cd ../analysis
+python comprehensive_comparison.py
 ```
 
-Model sẽ train ensemble 3 models với seeds khác nhau, results lưu ở `model/results/`
+## Project Structure
 
-### 4. Analysis
-
-```bash
-cd analysis
-
-# Ablation study - test các feature sets khác nhau
-python ablation_study_dnn.py
-
-# So sánh với ML models khác (RF, XGBoost, LightGBM)
-python alternative_models.py
-
-# Visualize network
-python visualize_bipartite_network.py
+```
+Fraud_SupplyChain/
+├── preprocessing/     # Data cleaning & feature extraction
+├── network/          # Social network analysis
+├── model/            # DNN training
+└── analysis/         # Model evaluation
 ```
 
-## Kết quả chính
+## Key Results
 
-| Model | Features | AUC | Recall | Precision |
-|-------|----------|-----|--------|-----------|
-| DNN Ensemble | Transaction + Network (65) | **82.54%** | **75.17%** | 18.86% |
-| DNN Ensemble | Transaction only (57) | 82.16% | 74.83% | 20.15% |
+| Model | Features | AUC | Recall |
+|-------|----------|-----|--------|
+| DNN Ensemble | Transaction + Network (65) | 82.54% | 75.17% |
+| DNN Ensemble | Transaction only (57) | 82.16% | 74.83% |
 
-Network features giúp tăng AUC thêm **+0.38%** và catch thêm được 1 fraud case.
+## Configuration
 
-## Model config
+Edit `Fraud_SupplyChain/model/config.py` to adjust:
+- Model architecture (layers, dropout)
+- Training parameters (epochs, batch size)
+- Loss function (cost-sensitive focal loss)
+- Threshold for classification
 
-Xem chi tiết tại `Fraud_SupplyChain/model/config.py`:
-- Architecture: 256 → 128 → 64 với BatchNorm + Dropout
-- Loss: Cost-Sensitive Focal Loss (FN_cost = 15x)
-- SMOTE: Balanced sampling (1.0)
-- Threshold: 0.20 (optimized cho high recall)
+## Troubleshooting
 
-## Network Features
-
-Từ bipartite graph Customer-Product (20K customers, 118 products, 101K edges):
-- Degree/Betweenness/Closeness Centrality
-- PageRank
-- Eigenvector Centrality
-- Clustering Coefficient
-- Community ID
-
-## Notes
-
-Nếu gặp lỗi corrupted data, chạy:
+**Corrupted data:**
 ```bash
+cd Fraud_SupplyChain/preprocessing
 python clean_data.py
 ```
 
-## Author
+**Missing dependencies:**
+```bash
+pip install -r requirements.txt --upgrade
+```
 
-Research project cho môn Social Network Analysis & Fraud Detection
+## Requirements
+
+- Python 3.8+
+- TensorFlow 2.12+
+- NetworkX 3.0+
+- See `requirements.txt` for full list
+
+## Dataset
+
+Place `DataCoSupplyChainDataset.csv` in `data/raw/` directory.
+
+## License
+
+MIT License

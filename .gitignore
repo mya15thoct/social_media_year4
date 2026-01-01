@@ -8,13 +8,14 @@
 kaggle.json
 
 # Python
-# __pycache__/
+__pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
 env/
 venv/
+.venv/
 ENV/
 build/
 develop-eggs/
@@ -31,6 +32,13 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Model files and results
+Fraud_SupplyChain/model/results/
+Fraud_SupplyChain/model/saved_models/
+Fraud_SupplyChain/model/*.keras
+Fraud_SupplyChain/model/*.h5
+Fraud_SupplyChain/analysis/results/
 
 # Jupyter Notebook
 .ipynb_checkpoints
