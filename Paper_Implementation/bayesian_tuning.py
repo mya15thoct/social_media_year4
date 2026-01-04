@@ -98,7 +98,6 @@ class BayesianTuner:
         
         return model
     
-    @use_named_args(search_space)
     def objective(self, layer_1_size, layer_2_size, layer_3_size,
                  dropout_rate, learning_rate, batch_size):
         """
@@ -207,7 +206,7 @@ class BayesianTuner:
         
         # Run optimization
         result = gp_minimize(
-            func=self.objective,
+            func=lambda x: self.objective(x[0], x[1], x[2], x[3], x[4], x[5]),
             dimensions=search_space,
             n_calls=n_calls,
             random_state=config.RANDOM_STATE,

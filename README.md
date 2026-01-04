@@ -46,12 +46,7 @@ Fraud_SupplyChain/
 └── analysis/         # Model evaluation
 ```
 
-## Key Results
 
-| Model | Features | AUC | Recall |
-|-------|----------|-----|--------|
-| DNN Ensemble | Transaction + Network (65) | 82.54% | 75.17% |
-| DNN Ensemble | Transaction only (57) | 82.16% | 74.83% |
 
 ## Configuration
 
@@ -85,6 +80,3 @@ pip install -r requirements.txt --upgrade
 
 Place `DataCoSupplyChainDataset.csv` in `data/raw/` directory.
 
-## License
-
-MIT License

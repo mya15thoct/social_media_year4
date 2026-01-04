@@ -1,7 +1,4 @@
-"""
-Script phân tích cơ bản DataCo Supply Chain Dataset
-Trả lời các câu hỏi về dataset
-"""
+
 import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
